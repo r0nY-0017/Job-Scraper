@@ -1,6 +1,10 @@
 {
   "rewrites": [
+<<<<<<< HEAD
     { "source": "/api/jobs", "destination": "/api/index.py" },
+=======
+    { "source": "/api/jobs", "destination": "/api/jobs.py" },
+>>>>>>> dbd878ec88cbcf34103c5e6739f5a4dc951de38e
     { "source": "/(.*)", "destination": "/public/index.html" }
   ]
 }

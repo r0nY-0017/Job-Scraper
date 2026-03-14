@@ -305,6 +305,10 @@ def scrape_indeed(keyword, location):
 # ==================== Vercel Handler ====================
 def handler(request):
     """Vercel serverless function handler"""
+    return {
+        "statusCode": 200,
+        "body": "Hello World"
+    }
     try:
         # Parse query parameters
         from urllib.parse import parse_qs, urlparse
