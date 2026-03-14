@@ -115,16 +115,16 @@ nav{background:var(--s);border-bottom:1px solid var(--bd);padding:0 2rem;display
 
   <div class="sw">
     <div class="sr">
-      <input class="si" id="kw" placeholder="🔍  Job title, skill, company..." value="Machine Learning Engineer">
+      <input class="si" id="kw" placeholder="🔍 Job title, skill, company..." value="Machine Learning Engineer">
       <div class="sdiv"></div>
       <select class="si fsel" id="loc" style="cursor:pointer;border:none;outline:none">
-        <option value="">📍  সব Location</option>
-        <option value="Dhaka" selected>📍  Dhaka</option>
-        <option value="Chittagong">📍  Chittagong</option>
-        <option value="Sylhet">📍  Sylhet</option>
-        <option value="Remote">📍  Remote</option>
+        <option value="">📍 সব Location</option>
+        <option value="Dhaka" selected>📍 Dhaka</option>
+        <option value="Chittagong">📍 Chittagong</option>
+        <option value="Sylhet">📍 Sylhet</option>
+        <option value="Remote">📍 Remote</option>
       </select>
-      <button class="btn-go" id="searchBtn" onclick="search()">Search</button>
+      <button class="btn-go" id="searchBtn" onclick="searchJobs()">Search</button>
     </div>
     <div class="sf">
       <select class="fsel" id="expF">
@@ -143,21 +143,21 @@ nav{background:var(--s);border-bottom:1px solid var(--bd);padding:0 2rem;display
   </div>
 
   <div class="src-row">
-    <div class="src-b on" id="sb-bdjobs"  onclick="toggleSrc('bdjobs',this)"><span class="src-dot"></span>BDJobs</div>
-    <div class="src-b on" id="sb-chakri"  onclick="toggleSrc('chakri',this)"><span class="src-dot"></span>Chakri.com</div>
-    <div class="src-b on" id="sb-indeed"  onclick="toggleSrc('indeed',this)"><span class="src-dot"></span>Indeed BD</div>
+    <div class="src-b on" id="sb-bdjobs" onclick="toggleSource('bdjobs',this)"><span class="src-dot"></span>BDJobs</div>
+    <div class="src-b on" id="sb-chakri" onclick="toggleSource('chakri',this)"><span class="src-dot"></span>Chakri.com</div>
+    <div class="src-b on" id="sb-indeed" onclick="toggleSource('indeed',this)"><span class="src-dot"></span>Indeed BD</div>
   </div>
 </div>
 
 <div class="stats-bar">
-  <div class="stat-i"><span class="stat-n" id="stTotal">—</span>&nbsp;Jobs Found</div>
-  <div class="stat-i"><span class="stat-n" id="stNew">—</span>&nbsp;New Today</div>
-  <div class="stat-i"><span class="stat-n" id="stRemote">—</span>&nbsp;Remote</div>
+  <div class="stat-i"><span class="stat-n" id="stTotal">0</span> Jobs Found</div>
+  <div class="stat-i"><span class="stat-n" id="stNew">0</span> New Today</div>
+  <div class="stat-i"><span class="stat-n" id="stRemote">0</span> Remote</div>
 </div>
 
 <div class="main">
   <div class="lhdr">
-    <div class="lcount" id="lcount">অপেক্ষা করুন...</div>
+    <div class="lcount" id="lcount">Loading jobs...</div>
   </div>
   <div class="tabs">
     <button class="tab active" onclick="setTab('all',this)">All Jobs</button>
@@ -169,245 +169,375 @@ nav{background:var(--s);border-bottom:1px solid var(--bd);padding:0 2rem;display
     <div class="loading">
       <div class="spinner"></div>
       <p>Real jobs লোড হচ্ছে...</p>
+      <div class="loading-step" id="loadingStep"></div>
     </div>
   </div>
 </div>
 
-<div class="modal-ov" id="mOv" onclick="if(event.target===this)closeModal()">
+<div class="modal-ov" id="modalOverlay" onclick="if(event.target===this) closeModal()">
   <div class="modal">
     <button class="mcl" onclick="closeModal()">×</button>
-    <div id="mContent"></div>
+    <div id="modalContent"></div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Config ─────────────────────────────────────────────────
-// window.location.origin works for same-origin Vercel deploy
-const API = window.location.origin + "/api/jobs";
+// ==================== Configuration ====================
+const API_BASE_URL = window.location.origin + "/api/jobs";
 
-// ── State ──────────────────────────────────────────────────
-let allJobs  = [];
-let filtered = [];
-let tab      = 'all';
-let saved    = JSON.parse(localStorage.getItem('tjbd') || '[]');
-let srcOn    = { bdjobs:true, chakri:true, indeed:true };
-let busy     = false;
+// ==================== State ====================
+let allJobs = [];
+let filteredJobs = [];
+let currentTab = 'all';
+let savedJobs = JSON.parse(localStorage.getItem('savedJobs') || '[]');
+let activeSources = {
+  bdjobs: true,
+  chakri: true,
+  indeed: true
+};
+let isLoading = false;
 
-// ── Source toggle ──────────────────────────────────────────
-function toggleSrc(k, el) {
-  srcOn[k] = !srcOn[k];
-  el.classList.toggle('on', srcOn[k]);
+// ==================== DOM Elements ====================
+const jobListEl = document.getElementById('jobList');
+const pillEl = document.getElementById('pill');
+const stTotalEl = document.getElementById('stTotal');
+const stNewEl = document.getElementById('stNew');
+const stRemoteEl = document.getElementById('stRemote');
+const lcountEl = document.getElementById('lcount');
+const loadingStepEl = document.getElementById('loadingStep');
+
+// ==================== Utility Functions ====================
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
-// ── Search ─────────────────────────────────────────────────
-async function search() {
-  if (busy) return;
-  busy = true;
+function encodeParam(text) {
+  return encodeURIComponent(text || '');
+}
 
-  const kw  = document.getElementById('kw').value.trim()  || 'Machine Learning Engineer';
-  const loc = document.getElementById('loc').value;
-  const exp = document.getElementById('expF').value;
-  const typ = document.getElementById('typeF').value;
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2400);
+}
 
-  const btn = document.getElementById('searchBtn');
-  btn.disabled = true; btn.textContent = 'Searching...';
-  showLoading(kw);
+// ==================== Source Toggle ====================
+function toggleSource(source, element) {
+  activeSources[source] = !activeSources[source];
+  element.classList.toggle('on', activeSources[source]);
+}
 
-  const actives = Object.entries(srcOn).filter(([,v])=>v).map(([k])=>k);
-  const src = actives.length === 3 ? 'all' : (actives[0] || 'all');
-
-  const url = `${API}?keyword=${enc(kw)}&location=${enc(loc)}&source=${src}`;
-
+// ==================== API Call ====================
+async function fetchJobs(keyword, location, source) {
+  const url = `${API_BASE_URL}?keyword=${encodeParam(keyword)}&location=${encodeParam(location)}&source=${encodeParam(source)}`;
+  
   try {
-    const res  = await fetch(url, { signal: AbortSignal.timeout(35000) });
-    if (!res.ok) throw new Error(`Server error: ${res.status}`);
-    const data = await res.json();
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+}
 
-    allJobs  = data.jobs || [];
-    filtered = allJobs.filter(j =>
-      (!exp || j.experience === exp) && (!typ || j.job_type === typ)
-    );
-
-    document.getElementById('stTotal').textContent  = allJobs.length;
-    document.getElementById('stNew').textContent    = data.new_today   || 0;
-    document.getElementById('stRemote').textContent = data.remote_count|| 0;
-    document.getElementById('lcount').innerHTML =
-      `<strong>${filtered.length} jobs</strong> — "${kw}" ${loc ? 'in '+loc : 'in Bangladesh'}`;
-
-    const pill = document.getElementById('pill');
-    pill.textContent = '🟢 Live'; pill.className = 'pill live';
-
-    setTab(tab);
-
-    if (data.errors?.length) console.warn('Scraper notes:', data.errors);
-
-  } catch (err) {
-    const pill = document.getElementById('pill');
-    pill.textContent = '🔴 Error'; pill.className = 'pill';
-
-    document.getElementById('jobList').innerHTML = `
+// ==================== Search Function ====================
+async function searchJobs() {
+  if (isLoading) return;
+  
+  isLoading = true;
+  const searchBtn = document.getElementById('searchBtn');
+  searchBtn.disabled = true;
+  searchBtn.textContent = 'Searching...';
+  
+  // Get form values
+  const keyword = document.getElementById('kw').value.trim() || 'Machine Learning Engineer';
+  const location = document.getElementById('loc').value;
+  const experience = document.getElementById('expF').value;
+  const jobType = document.getElementById('typeF').value;
+  
+  // Get active sources
+  const activeSourceList = Object.entries(activeSources)
+    .filter(([, active]) => active)
+    .map(([source]) => source);
+  
+  const sourceParam = activeSourceList.length === 3 ? 'all' : activeSourceList[0] || 'all';
+  
+  // Show loading state
+  showLoading(keyword);
+  
+  try {
+    const data = await fetchJobs(keyword, location, sourceParam);
+    
+    if (data.status === 'success') {
+      allJobs = data.jobs || [];
+      
+      // Apply filters
+      filteredJobs = allJobs.filter(job => {
+        const matchExp = !experience || job.experience === experience;
+        const matchType = !jobType || job.job_type === jobType;
+        return matchExp && matchType;
+      });
+      
+      // Update stats
+      stTotalEl.textContent = allJobs.length;
+      stNewEl.textContent = data.new_today || 0;
+      stRemoteEl.textContent = data.remote_count || 0;
+      
+      // Update header
+      lcountEl.innerHTML = `<strong>${filteredJobs.length} jobs</strong> — "${keyword}" ${location ? 'in ' + location : 'in Bangladesh'}`;
+      
+      // Update pill
+      pillEl.textContent = '🟢 Live';
+      pillEl.className = 'pill live';
+      
+      // Render jobs
+      setTab(currentTab);
+    } else {
+      throw new Error(data.message || 'Unknown error');
+    }
+    
+  } catch (error) {
+    console.error('Search error:', error);
+    
+    pillEl.textContent = '🔴 Error';
+    pillEl.className = 'pill';
+    
+    jobListEl.innerHTML = `
       <div class="err">
         <strong>⚠️ Data আনা যায়নি</strong><br><br>
-        ${err.message.includes('timeout')
+        ${error.message.includes('timeout') 
           ? 'Timeout — sites গুলো respond করতে দেরি করছে। একটু পরে আবার try করুন।'
-          : `Error: <code>${err.message}</code>`
-        }<br><br>
-        Vercel Function logs দেখুন:
-        <a href="https://vercel.com/dashboard" target="_blank">vercel.com/dashboard</a>
+          : `Error: ${escapeHtml(error.message)}`
+        }
       </div>`;
   } finally {
-    btn.disabled = false; btn.textContent = 'Search';
-    busy = false;
+    isLoading = false;
+    searchBtn.disabled = false;
+    searchBtn.textContent = 'Search';
   }
 }
 
-// ── Loading ────────────────────────────────────────────────
-const steps = ['BDJobs search করছি...','Chakri.com check করছি...','Indeed BD থেকে আনছি...','Jobs একত্র করছি...'];
-function showLoading(kw) {
-  document.getElementById('jobList').innerHTML = `
+// ==================== Loading Animation ====================
+function showLoading(keyword) {
+  const steps = [
+    'BDJobs search করছি...',
+    'Chakri.com check করছি...',
+    'Indeed BD থেকে আনছি...',
+    'Jobs একত্র করছি...'
+  ];
+  
+  jobListEl.innerHTML = `
     <div class="loading">
       <div class="spinner"></div>
-      <p>"<strong>${esc(kw)}</strong>" খোঁজা হচ্ছে...</p>
-      <div class="loading-step" id="lstep"></div>
+      <p>"<strong>${escapeHtml(keyword)}</strong>" খোঁজা হচ্ছে...</p>
+      <div class="loading-step" id="loadingStep"></div>
     </div>`;
-  let i = 0;
-  const iv = setInterval(() => {
-    const el = document.getElementById('lstep');
-    if (!el) { clearInterval(iv); return; }
-    if (i < steps.length) el.textContent = steps[i++];
-    else clearInterval(iv);
-  }, 1600);
+  
+  let stepIndex = 0;
+  const interval = setInterval(() => {
+    const stepEl = document.getElementById('loadingStep');
+    if (!stepEl) {
+      clearInterval(interval);
+      return;
+    }
+    if (stepIndex < steps.length) {
+      stepEl.textContent = steps[stepIndex];
+      stepIndex++;
+    } else {
+      clearInterval(interval);
+    }
+  }, 1500);
 }
 
-// ── Tabs ───────────────────────────────────────────────────
-function setTab(t, el) {
-  tab = t;
-  if (el) { document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); el.classList.add('active'); }
-  let list = [...filtered];
-  if (t === 'new')    list = filtered.filter(j=>j.is_new);
-  if (t === 'remote') list = filtered.filter(j=>j.is_remote);
-  if (t === 'saved')  list = allJobs.filter(j=>saved.includes(j.id));
-  renderJobs(list);
+// ==================== Tab Management ====================
+function setTab(tab, element) {
+  currentTab = tab;
+  
+  // Update active tab
+  if (element) {
+    document.querySelectorAll('.tab').forEach(tabEl => tabEl.classList.remove('active'));
+    element.classList.add('active');
+  }
+  
+  // Filter jobs based on tab
+  let jobsToRender = [];
+  
+  switch(tab) {
+    case 'all':
+      jobsToRender = filteredJobs;
+      break;
+    case 'new':
+      jobsToRender = filteredJobs.filter(job => job.is_new);
+      break;
+    case 'remote':
+      jobsToRender = filteredJobs.filter(job => job.is_remote);
+      break;
+    case 'saved':
+      jobsToRender = allJobs.filter(job => savedJobs.includes(job.id));
+      break;
+  }
+  
+  renderJobs(jobsToRender);
 }
 
-// ── Render ─────────────────────────────────────────────────
-function renderJobs(list) {
-  const el = document.getElementById('jobList');
-  if (!list.length) {
-    el.innerHTML = `<div class="empty"><h3>কোনো Job পাওয়া যায়নি</h3><p>অন্য keyword বা filter দিয়ে চেষ্টা করুন।</p></div>`;
+// ==================== Render Jobs ====================
+function renderJobs(jobs) {
+  if (!jobs || jobs.length === 0) {
+    jobListEl.innerHTML = `
+      <div class="empty">
+        <h3>কোনো Job পাওয়া যায়নি</h3>
+        <p>অন্য keyword বা filter দিয়ে চেষ্টা করুন।</p>
+      </div>`;
     return;
   }
-  el.innerHTML = '';
-  const wrap = document.createElement('div');
-  wrap.className = 'results';
-
-  list.forEach((j, i) => {
-    const isSaved = saved.includes(j.id);
-    const div = document.createElement('div');
-    div.className = 'jcard' + (j.is_new ? ' isnew' : '');
-    div.style.animationDelay = Math.min(i*35,280) + 'ms';
-    div.innerHTML = `
-      <div class="ctop">
-        <div class="cleft">
-          <div class="badges">
-            ${j.is_new    ? '<span class="badge b-new">New</span>' : ''}
-            ${j.is_remote ? '<span class="badge b-remote">Remote</span>' : ''}
-            ${j.job_type==='Internship' ? '<span class="badge b-intern">Internship</span>' : ''}
+  
+  let html = '<div class="results">';
+  
+  jobs.forEach((job, index) => {
+    const isSaved = savedJobs.includes(job.id);
+    const animationDelay = Math.min(index * 35, 280);
+    
+    html += `
+      <div class="jcard ${job.is_new ? 'isnew' : ''}" style="animation-delay: ${animationDelay}ms" onclick="openModal(${index})">
+        <div class="ctop">
+          <div class="cleft">
+            <div class="badges">
+              ${job.is_new ? '<span class="badge b-new">New</span>' : ''}
+              ${job.is_remote ? '<span class="badge b-remote">Remote</span>' : ''}
+              ${job.job_type === 'Internship' ? '<span class="badge b-intern">Internship</span>' : ''}
+            </div>
+            <div class="jtitle">${escapeHtml(job.title)}</div>
+            <div class="jcomp"><strong>${escapeHtml(job.company)}</strong> &nbsp;·&nbsp; ${escapeHtml(job.location)}</div>
+            <div class="jmeta">
+              <span>📋 ${escapeHtml(job.job_type)}</span>
+              <span>🎯 ${escapeHtml(job.experience)}</span>
+              ${job.deadline ? `<span>⏰ ${escapeHtml(job.deadline)}</span>` : ''}
+              <span style="color:var(--ink3)">via ${escapeHtml(job.source)}</span>
+            </div>
+            <div class="jskills">
+              ${(job.skills || []).map(skill => `<span class="sk">${escapeHtml(skill)}</span>`).join('')}
+            </div>
           </div>
-          <div class="jtitle">${esc(j.title)}</div>
-          <div class="jcomp"><strong>${esc(j.company)}</strong> &nbsp;·&nbsp; ${esc(j.location)}</div>
-          <div class="jmeta">
-            <span>📋 ${esc(j.job_type)}</span>
-            <span>🎯 ${esc(j.experience)}</span>
-            ${j.deadline ? `<span>⏰ ${esc(j.deadline)}</span>` : ''}
-            <span style="color:var(--ink3)">via ${esc(j.source)}</span>
+          <div class="cright">
+            <div class="logo-box">${(job.company || '?')[0].toUpperCase()}</div>
+            <button class="save-btn ${isSaved ? 'saved' : ''}" onclick="toggleSave('${job.id}', this, event)">${isSaved ? '★' : '☆'}</button>
           </div>
-          <div class="jskills">${(j.skills||[]).map(s=>`<span class="sk">${esc(s)}</span>`).join('')}</div>
         </div>
-        <div class="cright">
-          <div class="logo-box">${(j.company||'?')[0].toUpperCase()}</div>
-          <button class="save-btn ${isSaved?'saved':''}" onclick="toggleSave('${j.id}',this,event)">${isSaved?'★':'☆'}</button>
-        </div>
-      </div>
-      <div class="cfoot">
-        <span class="salary">${esc(j.salary||'Negotiable')}</span>
-        <div class="fright">
-          <span class="posted">${esc(j.posted_date||'')}</span>
-          <span class="src-chip">${esc(j.source)}</span>
-          <a class="btn-apply" href="${j.apply_url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Apply Now ↗</a>
+        <div class="cfoot">
+          <span class="salary">${escapeHtml(job.salary || 'Negotiable')}</span>
+          <div class="fright">
+            <span class="posted">${escapeHtml(job.posted_date || '')}</span>
+            <span class="src-chip">${escapeHtml(job.source)}</span>
+            <a class="btn-apply" href="${job.apply_url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Apply Now ↗</a>
+          </div>
         </div>
       </div>`;
-    div.addEventListener('click', () => openModal(j));
-    wrap.appendChild(div);
   });
-  el.appendChild(wrap);
+  
+  html += '</div>';
+  jobListEl.innerHTML = html;
+  
+  // Store jobs data for modal
+  window.currentJobs = jobs;
 }
 
-// ── Modal ──────────────────────────────────────────────────
-function openModal(j) {
-  document.getElementById('mContent').innerHTML = `
-    <div class="badges" style="margin-bottom:10px">
-      ${j.is_new?'<span class="badge b-new">New</span>':''}
-      ${j.is_remote?'<span class="badge b-remote">Remote</span>':''}
-    </div>
-    <h2>${esc(j.title)}</h2>
-    <div class="mmeta">
-      <span>🏢 ${esc(j.company)}</span>
-      <span>📍 ${esc(j.location)}</span>
-      <span>📋 ${esc(j.job_type)}</span>
-      <span>🎯 ${esc(j.experience)}</span>
-      ${j.salary?`<span>💰 ${esc(j.salary)}</span>`:''}
-      ${j.deadline?`<span>⏰ Deadline: ${esc(j.deadline)}</span>`:''}
-      <span style="color:var(--ink3)">via ${esc(j.source)}</span>
-    </div>
-    ${j.description?`<div class="msec"><h4>Description</h4><p>${esc(j.description)}</p></div>`:''}
-    ${(j.skills||[]).length?`<div class="msec"><h4>Skills</h4><div class="jskills">${j.skills.map(s=>`<span class="sk">${esc(s)}</span>`).join('')}</div></div>`:''}
-    <div class="mactions">
-      <a class="btn-apply" href="${j.apply_url}" target="_blank" rel="noopener" style="flex:1;justify-content:center;padding:12px">
-        Apply on ${esc(j.source)} ↗
-      </a>
-      <a class="btn-outline" href="https://jobs.bdjobs.com/jobsearch.asp?Keyword=${enc(j.title)}&Country=1" target="_blank" rel="noopener">
-        BDJobs ↗
-      </a>
-    </div>`;
-  document.getElementById('mOv').classList.add('open');
-}
-function closeModal() { document.getElementById('mOv').classList.remove('open'); }
-
-// ── Save ───────────────────────────────────────────────────
-function toggleSave(id, btn, e) {
-  e.stopPropagation();
-  if (saved.includes(id)) {
-    saved = saved.filter(s=>s!==id);
-    btn.textContent='☆'; btn.classList.remove('saved');
-    toast('Removed from saved');
+// ==================== Save Toggle ====================
+function toggleSave(jobId, button, event) {
+  event.stopPropagation();
+  
+  const index = savedJobs.indexOf(jobId);
+  if (index === -1) {
+    savedJobs.push(jobId);
+    button.classList.add('saved');
+    button.textContent = '★';
+    showToast('Saved! ★');
   } else {
-    saved.push(id);
-    btn.textContent='★'; btn.classList.add('saved');
-    toast('Saved! ★');
+    savedJobs.splice(index, 1);
+    button.classList.remove('saved');
+    button.textContent = '☆';
+    showToast('Removed from saved');
   }
-  localStorage.setItem('tjbd', JSON.stringify(saved));
+  
+  localStorage.setItem('savedJobs', JSON.stringify(savedJobs));
 }
 
-// ── Utils ──────────────────────────────────────────────────
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function enc(s){ return encodeURIComponent(s||''); }
-function toast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2400);
+// ==================== Modal Functions ====================
+function openModal(index) {
+  const job = window.currentJobs[index];
+  if (!job) return;
+  
+  const modalContent = document.getElementById('modalContent');
+  const isSaved = savedJobs.includes(job.id);
+  
+  modalContent.innerHTML = `
+    <div class="badges" style="margin-bottom:10px">
+      ${job.is_new ? '<span class="badge b-new">New</span>' : ''}
+      ${job.is_remote ? '<span class="badge b-remote">Remote</span>' : ''}
+    </div>
+    <h2>${escapeHtml(job.title)}</h2>
+    <div class="mmeta">
+      <span>🏢 ${escapeHtml(job.company)}</span>
+      <span>📍 ${escapeHtml(job.location)}</span>
+      <span>📋 ${escapeHtml(job.job_type)}</span>
+      <span>🎯 ${escapeHtml(job.experience)}</span>
+      ${job.salary ? `<span>💰 ${escapeHtml(job.salary)}</span>` : ''}
+      ${job.deadline ? `<span>⏰ Deadline: ${escapeHtml(job.deadline)}</span>` : ''}
+      <span style="color:var(--ink3)">via ${escapeHtml(job.source)}</span>
+    </div>
+    ${job.description ? `
+      <div class="msec">
+        <h4>Description</h4>
+        <p>${escapeHtml(job.description)}</p>
+      </div>
+    ` : ''}
+    ${(job.skills || []).length ? `
+      <div class="msec">
+        <h4>Skills</h4>
+        <div class="jskills">
+          ${job.skills.map(skill => `<span class="sk">${escapeHtml(skill)}</span>`).join('')}
+        </div>
+      </div>
+    ` : ''}
+    <div class="mactions">
+      <a class="btn-apply" href="${job.apply_url}" target="_blank" rel="noopener" style="flex:1;justify-content:center;padding:12px">
+        Apply on ${escapeHtml(job.source)} ↗
+      </a>
+      <button class="btn-outline" onclick="toggleSave('${job.id}', this, event); event.stopPropagation();">
+        ${isSaved ? '★ Saved' : '☆ Save'}
+      </button>
+    </div>`;
+  
+  document.getElementById('modalOverlay').classList.add('open');
 }
 
-// ── Keys ───────────────────────────────────────────────────
-document.addEventListener('keydown', e=>{
-  if(e.key==='Escape') closeModal();
-  if(e.key==='Enter' && document.activeElement.id==='kw') search();
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+// ==================== Event Listeners ====================
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeModal();
+  }
+  if (e.key === 'Enter' && document.activeElement.id === 'kw') {
+    searchJobs();
+  }
 });
 
-// ── Init ───────────────────────────────────────────────────
-search();
+// ==================== Initial Load ====================
+window.addEventListener('load', () => {
+  searchJobs();
+});
 </script>
 </body>
 </html>
