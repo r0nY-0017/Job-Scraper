@@ -1,13 +1,6 @@
-
 {
-  "functions": {
-    "api/jobs.py": {
-      "runtime": "python3.9@1.0.0",
-      "maxDuration": 10
-    }
-  },
   "rewrites": [
-    { "source": "/api/jobs", "destination": "/api/jobs" },
+    { "source": "/api/jobs", "destination": "/api/index.py" },
     { "source": "/(.*)", "destination": "/public/index.html" }
   ]
 }
