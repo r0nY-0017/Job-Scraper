@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TechJobs BD — AI & Tech Jobs in Bangladesh</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F5F2ED;--s:#fff;--s2:#EDEAE4;--ink:#1A1814;--ink2:#6B6760;--ink3:#A8A5A0;--acc:#D4622A;--acc2:#2A5CD4;--gr:#1A7A4A;--gr-bg:#E6F5ED;--am:#B85A0A;--am-bg:#FDF0E6;--bd:#DDD9D3;--bd2:#C8C4BE;--r:12px;--rs:8px;--sh:0 2px 12px rgba(0,0,0,.07)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:15px;line-height:1.6}
+nav{background:var(--s);border-bottom:1px solid var(--bd);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100}
+.logo{font-family:'DM Serif Display',serif;font-size:22px;display:flex;align-items:center;gap:8px}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--acc);display:inline-block}
+.pill{font-size:11px;font-weight:600;padding:4px 12px;border-radius:99px;background:var(--am-bg);color:var(--am);transition:all .3s}
+.pill.live{background:var(--gr-bg);color:var(--gr)}
+.hero{background:var(--s);border-bottom:1px solid var(--bd);padding:2.5rem 2rem 2rem;text-align:center}
+.hero-tag{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);background:#FDEEE6;padding:4px 12px;border-radius:99px;margin-bottom:1rem}
+.hero h1{font-family:'DM Serif Display',serif;font-size:clamp(28px,5vw,48px);line-height:1.15;max-width:640px;margin:0 auto .75rem}
+.hero h1 em{font-style:italic;color:var(--acc)}
+.hero p{font-size:15px;color:var(--ink2);max-width:480px;margin:0 auto 1.75rem}
+.sw{background:var(--s);border:1.5px solid var(--bd2);border-radius:var(--r);padding:1rem;max-width:780px;margin:0 auto;box-shadow:var(--sh)}
+.sr{display:grid;grid-template-columns:1fr 1px 1fr auto;gap:8px;align-items:center;margin-bottom:10px}
+.sdiv{width:1px;height:30px;background:var(--bd);justify-self:center}
+.si{border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--ink);background:transparent;width:100%;padding:6px 8px}
+.si::placeholder{color:var(--ink3)}
+.sf{display:flex;gap:8px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--bd)}
+.fsel{font-family:'DM Sans',sans-serif;font-size:13px;border:1px solid var(--bd);border-radius:99px;padding:5px 12px;background:var(--s);color:var(--ink2);cursor:pointer;appearance:none}
+.btn-go{background:var(--acc);color:#fff;border:none;border-radius:var(--rs);padding:10px 26px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s}
+.btn-go:hover{background:#b84e1e;transform:translateY(-1px)}
+.btn-go:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.src-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:1.25rem}
+.src-b{display:flex;align-items:center;gap:5px;font-size:12px;padding:4px 12px;border-radius:99px;border:1px solid var(--bd);color:var(--ink2);background:var(--s);cursor:pointer;transition:all .15s;user-select:none}
+.src-b.on{border-color:var(--acc2);color:var(--acc2);background:#EEF2FD}
+.src-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.stats-bar{background:var(--s);border-bottom:1px solid var(--bd);padding:.75rem 2rem;display:flex;gap:2rem;justify-content:center;flex-wrap:wrap}
+.stat-i{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2)}
+.stat-n{font-size:20px;font-weight:600;color:var(--ink);font-family:'DM Serif Display',serif}
+.main{max-width:920px;margin:0 auto;padding:2rem 1.5rem}
+.lhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.lcount{font-size:14px;color:var(--ink2)}
+.lcount strong{color:var(--ink)}
+.tabs{display:flex;border-bottom:1px solid var(--bd);margin-bottom:1.25rem}
+.tab{font-family:'DM Sans',sans-serif;font-size:14px;padding:8px 18px;background:none;border:none;border-bottom:2.5px solid transparent;color:var(--ink2);cursor:pointer;margin-bottom:-1px;transition:all .15s}
+.tab.active{color:var(--ink);border-bottom-color:var(--acc);font-weight:500}
+.results{display:flex;flex-direction:column;gap:10px}
+.jcard{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:1.25rem 1.5rem;cursor:pointer;transition:all .15s;animation:fu .22s ease both}
+.jcard:hover{border-color:var(--bd2);box-shadow:var(--sh);transform:translateY(-1px)}
+.jcard.isnew{border-left:3px solid var(--gr)}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.ctop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.cleft{flex:1;min-width:0}
+.badges{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px}
+.b-new{background:var(--gr-bg);color:var(--gr)}
+.b-remote{background:#EEF2FD;color:var(--acc2)}
+.b-intern{background:var(--am-bg);color:var(--am)}
+.jtitle{font-size:17px;font-weight:600;margin-bottom:4px;line-height:1.3}
+.jcomp{font-size:14px;color:var(--ink2);margin-bottom:8px}
+.jcomp strong{color:var(--ink)}
+.jmeta{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--ink2);margin-bottom:10px}
+.jskills{display:flex;gap:5px;flex-wrap:wrap}
+.sk{font-size:12px;padding:3px 10px;border-radius:99px;border:1px solid var(--bd);color:var(--ink2);background:var(--s2)}
+.cright{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0}
+.logo-box{width:44px;height:44px;border-radius:var(--rs);border:1px solid var(--bd);background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--ink2);font-family:'DM Serif Display',serif}
+.save-btn{background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink3);line-height:1;transition:color .15s}
+.save-btn:hover{color:var(--am)}
+.save-btn.saved{color:#E8A000}
+.cfoot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--bd)}
+.salary{font-size:14px;font-weight:600;color:var(--gr)}
+.fright{display:flex;align-items:center;gap:8px}
+.posted{font-size:12px;color:var(--ink3)}
+.src-chip{font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid var(--bd);color:var(--ink3);background:var(--s2)}
+.btn-apply{display:inline-flex;align-items:center;gap:4px;background:var(--ink);color:#fff;border:none;border-radius:var(--rs);padding:8px 16px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s}
+.btn-apply:hover{background:var(--acc);transform:translateY(-1px)}
+.loading{text-align:center;padding:4rem 1rem}
+.spinner{width:34px;height:34px;border:3px solid var(--bd);border-top-color:var(--acc);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{color:var(--ink2);font-size:14px}
+.loading-step{font-size:13px;color:var(--ink3);margin-top:6px;min-height:18px}
+.empty{text-align:center;padding:4rem 1rem;color:var(--ink2)}
+.empty h3{font-size:18px;margin-bottom:6px;color:var(--ink)}
+.err{background:#FEF2F2;border:1px solid #FECACA;border-radius:var(--r);padding:1.5rem;text-align:center;color:#991B1B;font-size:14px;line-height:1.7}
+.err a{color:#DC2626}
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-ov.open{opacity:1;pointer-events:all}
+.modal{background:var(--s);border-radius:var(--r);max-width:560px;width:100%;max-height:85vh;overflow-y:auto;padding:2rem;position:relative;transform:translateY(20px);transition:transform .2s}
+.modal-ov.open .modal{transform:translateY(0)}
+.mcl{position:absolute;top:1rem;right:1rem;background:var(--s2);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;color:var(--ink2);display:flex;align-items:center;justify-content:center}
+.mcl:hover{background:var(--bd);color:var(--ink)}
+.modal h2{font-size:20px;font-weight:600;margin-bottom:6px}
+.mmeta{font-size:14px;color:var(--ink2);margin-bottom:1.25rem;display:flex;flex-wrap:wrap;gap:8px}
+.msec{margin-bottom:1rem}
+.msec h4{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:6px}
+.msec p{font-size:14px;color:var(--ink2);line-height:1.7}
+.mactions{display:flex;gap:10px;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--bd)}
+.btn-outline{display:inline-flex;align-items:center;background:transparent;color:var(--ink2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 14px;font-family:'DM Sans',sans-serif;font-size:13px;text-decoration:none;transition:all .15s}
+.btn-outline:hover{border-color:var(--ink2);color:var(--ink)}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:12px 20px;border-radius:var(--rs);font-size:14px;z-index:999;transform:translateY(80px);opacity:0;transition:all .3s}
+.toast.show{transform:translateY(0);opacity:1}
+@media(max-width:600px){.sr{grid-template-columns:1fr}.sdiv{display:none}.main{padding:1.5rem 1rem}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span class="logo-dot"></span>TechJobs BD</div>
+  <span class="pill" id="pill">⏳ Connecting...</span>
+</nav>
+
+<div class="hero">
+  <div class="hero-tag">Bangladesh Tech Jobs — Real-time</div>
+  <h1>Find <em>AI & Tech</em> Jobs<br>in Bangladesh</h1>
+  <p>BDJobs, Chakri.com ও Indeed BD থেকে সরাসরি live data। Real apply links সহ।</p>
+
+  <div class="sw">
+    <div class="sr">
+      <input class="si" id="kw" placeholder="🔍  Job title, skill, company..." value="Machine Learning Engineer">
+      <div class="sdiv"></div>
+      <select class="si fsel" id="loc" style="cursor:pointer;border:none;outline:none">
+        <option value="">📍  সব Location</option>
+        <option value="Dhaka" selected>📍  Dhaka</option>
+        <option value="Chittagong">📍  Chittagong</option>
+        <option value="Sylhet">📍  Sylhet</option>
+        <option value="Remote">📍  Remote</option>
+      </select>
+      <button class="btn-go" id="searchBtn" onclick="search()">Search</button>
+    </div>
+    <div class="sf">
+      <select class="fsel" id="expF">
+        <option value="">Experience</option>
+        <option value="Entry Level">Entry (0-2 yr)</option>
+        <option value="Mid Level">Mid (2-5 yr)</option>
+        <option value="Senior">Senior (5+ yr)</option>
+      </select>
+      <select class="fsel" id="typeF">
+        <option value="">Job Type</option>
+        <option value="Full-time">Full-time</option>
+        <option value="Contract">Contract</option>
+        <option value="Internship">Internship</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="src-row">
+    <div class="src-b on" id="sb-bdjobs"  onclick="toggleSrc('bdjobs',this)"><span class="src-dot"></span>BDJobs</div>
+    <div class="src-b on" id="sb-chakri"  onclick="toggleSrc('chakri',this)"><span class="src-dot"></span>Chakri.com</div>
+    <div class="src-b on" id="sb-indeed"  onclick="toggleSrc('indeed',this)"><span class="src-dot"></span>Indeed BD</div>
+  </div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat-i"><span class="stat-n" id="stTotal">—</span>&nbsp;Jobs Found</div>
+  <div class="stat-i"><span class="stat-n" id="stNew">—</span>&nbsp;New Today</div>
+  <div class="stat-i"><span class="stat-n" id="stRemote">—</span>&nbsp;Remote</div>
+</div>
+
+<div class="main">
+  <div class="lhdr">
+    <div class="lcount" id="lcount">অপেক্ষা করুন...</div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="setTab('all',this)">All Jobs</button>
+    <button class="tab" onclick="setTab('new',this)">New Today</button>
+    <button class="tab" onclick="setTab('remote',this)">Remote</button>
+    <button class="tab" onclick="setTab('saved',this)">Saved ★</button>
+  </div>
+  <div id="jobList">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Real jobs লোড হচ্ছে...</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal-ov" id="mOv" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="mcl" onclick="closeModal()">×</button>
+    <div id="mContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ─────────────────────────────────────────────────
+// window.location.origin works for same-origin Vercel deploy
+const API = window.location.origin + "/api/jobs";
+
+// ── State ──────────────────────────────────────────────────
+let allJobs  = [];
+let filtered = [];
+let tab      = 'all';
+let saved    = JSON.parse(localStorage.getItem('tjbd') || '[]');
+let srcOn    = { bdjobs:true, chakri:true, indeed:true };
+let busy     = false;
+
+// ── Source toggle ──────────────────────────────────────────
+function toggleSrc(k, el) {
+  srcOn[k] = !srcOn[k];
+  el.classList.toggle('on', srcOn[k]);
+}
+
+// ── Search ─────────────────────────────────────────────────
+async function search() {
+  if (busy) return;
+  busy = true;
+
+  const kw  = document.getElementById('kw').value.trim()  || 'Machine Learning Engineer';
+  const loc = document.getElementById('loc').value;
+  const exp = document.getElementById('expF').value;
+  const typ = document.getElementById('typeF').value;
+
+  const btn = document.getElementById('searchBtn');
+  btn.disabled = true; btn.textContent = 'Searching...';
+  showLoading(kw);
+
+  const actives = Object.entries(srcOn).filter(([,v])=>v).map(([k])=>k);
+  const src = actives.length === 3 ? 'all' : (actives[0] || 'all');
+
+  const url = `${API}?keyword=${enc(kw)}&location=${enc(loc)}&source=${src}`;
+
+  try {
+    const res  = await fetch(url, { signal: AbortSignal.timeout(35000) });
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    const data = await res.json();
+
+    allJobs  = data.jobs || [];
+    filtered = allJobs.filter(j =>
+      (!exp || j.experience === exp) && (!typ || j.job_type === typ)
+    );
+
+    document.getElementById('stTotal').textContent  = allJobs.length;
+    document.getElementById('stNew').textContent    = data.new_today   || 0;
+    document.getElementById('stRemote').textContent = data.remote_count|| 0;
+    document.getElementById('lcount').innerHTML =
+      `<strong>${filtered.length} jobs</strong> — "${kw}" ${loc ? 'in '+loc : 'in Bangladesh'}`;
+
+    const pill = document.getElementById('pill');
+    pill.textContent = '🟢 Live'; pill.className = 'pill live';
+
+    setTab(tab);
+
+    if (data.errors?.length) console.warn('Scraper notes:', data.errors);
+
+  } catch (err) {
+    const pill = document.getElementById('pill');
+    pill.textContent = '🔴 Error'; pill.className = 'pill';
+
+    document.getElementById('jobList').innerHTML = `
+      <div class="err">
+        <strong>⚠️ Data আনা যায়নি</strong><br><br>
+        ${err.message.includes('timeout')
+          ? 'Timeout — sites গুলো respond করতে দেরি করছে। একটু পরে আবার try করুন।'
+          : `Error: <code>${err.message}</code>`
+        }<br><br>
+        Vercel Function logs দেখুন:
+        <a href="https://vercel.com/dashboard" target="_blank">vercel.com/dashboard</a>
+      </div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Search';
+    busy = false;
+  }
+}
+
+// ── Loading ────────────────────────────────────────────────
+const steps = ['BDJobs search করছি...','Chakri.com check করছি...','Indeed BD থেকে আনছি...','Jobs একত্র করছি...'];
+function showLoading(kw) {
+  document.getElementById('jobList').innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>"<strong>${esc(kw)}</strong>" খোঁজা হচ্ছে...</p>
+      <div class="loading-step" id="lstep"></div>
+    </div>`;
+  let i = 0;
+  const iv = setInterval(() => {
+    const el = document.getElementById('lstep');
+    if (!el) { clearInterval(iv); return; }
+    if (i < steps.length) el.textContent = steps[i++];
+    else clearInterval(iv);
+  }, 1600);
+}
+
+// ── Tabs ───────────────────────────────────────────────────
+function setTab(t, el) {
+  tab = t;
+  if (el) { document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); el.classList.add('active'); }
+  let list = [...filtered];
+  if (t === 'new')    list = filtered.filter(j=>j.is_new);
+  if (t === 'remote') list = filtered.filter(j=>j.is_remote);
+  if (t === 'saved')  list = allJobs.filter(j=>saved.includes(j.id));
+  renderJobs(list);
+}
+
+// ── Render ─────────────────────────────────────────────────
+function renderJobs(list) {
+  const el = document.getElementById('jobList');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><h3>কোনো Job পাওয়া যায়নি</h3><p>অন্য keyword বা filter দিয়ে চেষ্টা করুন।</p></div>`;
+    return;
+  }
+  el.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'results';
+
+  list.forEach((j, i) => {
+    const isSaved = saved.includes(j.id);
+    const div = document.createElement('div');
+    div.className = 'jcard' + (j.is_new ? ' isnew' : '');
+    div.style.animationDelay = Math.min(i*35,280) + 'ms';
+    div.innerHTML = `
+      <div class="ctop">
+        <div class="cleft">
+          <div class="badges">
+            ${j.is_new    ? '<span class="badge b-new">New</span>' : ''}
+            ${j.is_remote ? '<span class="badge b-remote">Remote</span>' : ''}
+            ${j.job_type==='Internship' ? '<span class="badge b-intern">Internship</span>' : ''}
+          </div>
+          <div class="jtitle">${esc(j.title)}</div>
+          <div class="jcomp"><strong>${esc(j.company)}</strong> &nbsp;·&nbsp; ${esc(j.location)}</div>
+          <div class="jmeta">
+            <span>📋 ${esc(j.job_type)}</span>
+            <span>🎯 ${esc(j.experience)}</span>
+            ${j.deadline ? `<span>⏰ ${esc(j.deadline)}</span>` : ''}
+            <span style="color:var(--ink3)">via ${esc(j.source)}</span>
+          </div>
+          <div class="jskills">${(j.skills||[]).map(s=>`<span class="sk">${esc(s)}</span>`).join('')}</div>
+        </div>
+        <div class="cright">
+          <div class="logo-box">${(j.company||'?')[0].toUpperCase()}</div>
+          <button class="save-btn ${isSaved?'saved':''}" onclick="toggleSave('${j.id}',this,event)">${isSaved?'★':'☆'}</button>
+        </div>
+      </div>
+      <div class="cfoot">
+        <span class="salary">${esc(j.salary||'Negotiable')}</span>
+        <div class="fright">
+          <span class="posted">${esc(j.posted_date||'')}</span>
+          <span class="src-chip">${esc(j.source)}</span>
+          <a class="btn-apply" href="${j.apply_url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Apply Now ↗</a>
+        </div>
+      </div>`;
+    div.addEventListener('click', () => openModal(j));
+    wrap.appendChild(div);
+  });
+  el.appendChild(wrap);
+}
+
+// ── Modal ──────────────────────────────────────────────────
+function openModal(j) {
+  document.getElementById('mContent').innerHTML = `
+    <div class="badges" style="margin-bottom:10px">
+      ${j.is_new?'<span class="badge b-new">New</span>':''}
+      ${j.is_remote?'<span class="badge b-remote">Remote</span>':''}
+    </div>
+    <h2>${esc(j.title)}</h2>
+    <div class="mmeta">
+      <span>🏢 ${esc(j.company)}</span>
+      <span>📍 ${esc(j.location)}</span>
+      <span>📋 ${esc(j.job_type)}</span>
+      <span>🎯 ${esc(j.experience)}</span>
+      ${j.salary?`<span>💰 ${esc(j.salary)}</span>`:''}
+      ${j.deadline?`<span>⏰ Deadline: ${esc(j.deadline)}</span>`:''}
+      <span style="color:var(--ink3)">via ${esc(j.source)}</span>
+    </div>
+    ${j.description?`<div class="msec"><h4>Description</h4><p>${esc(j.description)}</p></div>`:''}
+    ${(j.skills||[]).length?`<div class="msec"><h4>Skills</h4><div class="jskills">${j.skills.map(s=>`<span class="sk">${esc(s)}</span>`).join('')}</div></div>`:''}
+    <div class="mactions">
+      <a class="btn-apply" href="${j.apply_url}" target="_blank" rel="noopener" style="flex:1;justify-content:center;padding:12px">
+        Apply on ${esc(j.source)} ↗
+      </a>
+      <a class="btn-outline" href="https://jobs.bdjobs.com/jobsearch.asp?Keyword=${enc(j.title)}&Country=1" target="_blank" rel="noopener">
+        BDJobs ↗
+      </a>
+    </div>`;
+  document.getElementById('mOv').classList.add('open');
+}
+function closeModal() { document.getElementById('mOv').classList.remove('open'); }
+
+// ── Save ───────────────────────────────────────────────────
+function toggleSave(id, btn, e) {
+  e.stopPropagation();
+  if (saved.includes(id)) {
+    saved = saved.filter(s=>s!==id);
+    btn.textContent='☆'; btn.classList.remove('saved');
+    toast('Removed from saved');
+  } else {
+    saved.push(id);
+    btn.textContent='★'; btn.classList.add('saved');
+    toast('Saved! ★');
+  }
+  localStorage.setItem('tjbd', JSON.stringify(saved));
+}
+
+// ── Utils ──────────────────────────────────────────────────
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function enc(s){ return encodeURIComponent(s||''); }
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+// ── Keys ───────────────────────────────────────────────────
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape') closeModal();
+  if(e.key==='Enter' && document.activeElement.id==='kw') search();
+});
+
+// ── Init ───────────────────────────────────────────────────
+search();
+</script>
+</body>
+</html>
